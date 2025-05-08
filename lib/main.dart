@@ -250,17 +250,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.blue[800],
-        title: const Text('POS Payment'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-              );
-            },
-          ),
-        ],
+        title: const Text(''), // Removed "POS Payment" text
+        // Removed logout button from here
       ),
       body: SafeArea(
         child: Column(
@@ -271,19 +262,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.local_pizza, color: Colors.white, size: 32),
+                  // Replace pizza icon with merchant store name
+                  const Text(
+                    "Merchant Store",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   Text(_currentTime, style: const TextStyle(color: Colors.white)),
                   Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.receipt_long, color: Colors.white, size: 24),
-                        tooltip: 'View Logs',
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const LogsPage()),
-                          );
-                        },
-                      ),
+                      // Removed logs button from here
                       const Icon(Icons.wifi, color: Colors.lightGreenAccent, size: 12),
                       const SizedBox(width: 4),
                       GestureDetector(
