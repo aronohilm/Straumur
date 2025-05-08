@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'login_page.dart';
+import 'settings.dart';
 
 void main() => runApp(const PaymentApp());
 
@@ -16,7 +18,7 @@ class PaymentApp extends StatelessWidget {
     return MaterialApp(
       title: 'POS Payment',
       debugShowCheckedModeBanner: false,
-      home: const PaymentScreen(),
+      home: const LoginPage(),
     );
   }
 }
@@ -36,7 +38,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   late Timer _timer;
   late String _currentTime;
 
-  final String _apiKey = "YOUR_API_KEY_HERE";
+  final String _apiKey = "AQEqhmfxL43JaxFCw0m/n3Q5qf3Ve59fDIZHTXfy5UT9AM9RlDqYku8lh1U2EMFdWw2+5HzctViMSCJMYAc=-iql6F+AYb1jkHn3zzDBcXZZvYzXFr9wd1iCR9y2JDU0=-i1i{=<;wFH*jLc94NQe";
   final String _url = "https://terminal-api-test.adyen.com/sync";
   final String _poiId = "S1F2-000158242574825";
 
@@ -236,11 +238,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 children: [
                   const Icon(Icons.local_pizza, color: Colors.white, size: 32),
                   Text(_currentTime, style: const TextStyle(color: Colors.white)),
-                  Row(children: const [
-                    Icon(Icons.wifi, color: Colors.lightGreenAccent, size: 12),
-                    SizedBox(width: 4),
-                    Text('straumur', style: TextStyle(color: Colors.lightGreenAccent)),
-                  ]),
+                  Row(
+                    children: [
+                      const Icon(Icons.wifi, color: Colors.lightGreenAccent, size: 12),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const SettingsPage()),
+                          );
+                        },
+                        child: const Text(
+                          'straumur',
+                          style: TextStyle(color: Colors.lightGreenAccent, decoration: TextDecoration.underline),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -254,7 +268,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   controller: TextEditingController(
                     text: _amount.isEmpty
                         ? ''
-                        : '${_formatAmount(_amount)} ISK',
+                        : '${_formatAmount(_amount)} EUR',
                   ),
                   textAlign: TextAlign.right,
                   style: const TextStyle(fontSize: 36),
