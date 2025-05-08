@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -8,22 +11,39 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // Mock list of POS terminals; replace with your API data as needed
-  final List<String> _posTerminals = [
-    'POS-001 (Front Desk)',
-    'POS-002 (Bar)',
-    'POS-003 (Drive Thru)',
-    'POS-004 (Mobile Cart)',
-  ];
-
+  List<String> _posTerminals = [];
   String? _selectedTerminal;
 
   @override
   void initState() {
     super.initState();
-    // Optionally set a default selected terminal
-    if (_posTerminals.isNotEmpty) {
-      _selectedTerminal = _posTerminals[0];
+    _fetchTerminals();
+    _loadSelectedTerminal();
+  }
+
+  Future<void> _fetchTerminals() async {
+    // Replace with your API call if needed
+    final String data = await rootBundle.loadString('assets/terminals.json');
+    final List<dynamic> terminals = jsonDecode(data);
+    setState(() {
+      _posTerminals = terminals.cast<String>();
+      if (_posTerminals.isNotEmpty && _selectedTerminal == null) {
+        _selectedTerminal = _posTerminals[0];
+      }
+    });
+  }
+
+  Future<void> _loadSelectedTerminal() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedTerminal = prefs.getString('selected_terminal') ?? _posTerminals[0];
+    });
+  }
+
+  Future<void> _saveSelectedTerminal(String? terminal) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (terminal != null) {
+      await prefs.setString('selected_terminal', terminal);
     }
   }
 
@@ -56,6 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 setState(() {
                   _selectedTerminal = value;
                 });
+                _saveSelectedTerminal(value);
               },
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),

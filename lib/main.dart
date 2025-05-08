@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'logs_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'login_page.dart';
 import 'settings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const PaymentApp());
 
@@ -41,6 +43,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final String _apiKey = "AQEqhmfxL43JaxFCw0m/n3Q5qf3Ve59fDIZHTXfy5UT9AM9RlDqYku8lh1U2EMFdWw2+5HzctViMSCJMYAc=-iql6F+AYb1jkHn3zzDBcXZZvYzXFr9wd1iCR9y2JDU0=-i1i{=<;wFH*jLc94NQe";
   final String _url = "https://terminal-api-test.adyen.com/sync";
   final String _poiId = "S1F2-000158242574825";
+  String? _selectedTerminal;
 
   @override
   void initState() {
@@ -52,7 +55,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _currentTime = _getTimeString();
       });
     });
+    _loadSelectedTerminal();
   }
+
+  Future<void> _loadSelectedTerminal() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedTerminal = prefs.getString('selected_terminal');
+    });
+  }
+  // Use _selectedTerminal in your payment logic
 
   @override
   void dispose() {
@@ -168,6 +180,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
         body: jsonEncode(payload),
       );
 
+      if (response.statusCode != 200) {
+        setState(() {
+          _response = 'Error: ${response.statusCode}\n${response.body}';
+          _isLoading = false;
+        });
+        _showToast('Payment failed: ${response.statusCode}');
+        return;
+      }
+
       final responseJson = jsonDecode(response.body);
       final logEntry = {
         'timestamp': now.toIso8601String(),
@@ -189,10 +210,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _showToast('Sent to POS');
     } catch (e) {
       setState(() {
-        _response = 'Villa: $e';
+        _response = 'Error: $e';
         _isLoading = false;
       });
-      _showToast('Villa við sendingu');
+      _showToast('Network error: $e');
     }
   }
 
@@ -227,6 +248,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.blue[800],
+        title: const Text('POS Payment'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -240,6 +275,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   Text(_currentTime, style: const TextStyle(color: Colors.white)),
                   Row(
                     children: [
+                      IconButton(
+                        icon: const Icon(Icons.receipt_long, color: Colors.white, size: 24),
+                        tooltip: 'View Logs',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const LogsPage()),
+                          );
+                        },
+                      ),
                       const Icon(Icons.wifi, color: Colors.lightGreenAccent, size: 12),
                       const SizedBox(width: 4),
                       GestureDetector(
@@ -316,13 +360,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 width: double.infinity,
                 height: 80,
                 child: ElevatedButton(
+                  // Change this to directly call _sendPayment instead of _confirmAndSendPayment
                   onPressed: _isLoading ? null : _sendPayment,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text(_isLoading ? 'Sending...' : 'SENDA Í POSA', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Send Payment'),
                 ),
               ),
             ),
@@ -331,12 +373,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
     );
   }
-}
 
-// Add this method to your _PaymentScreenState class:
-String _formatAmount(String amount) {
-  if (amount.isEmpty) return '';
-  final number = int.tryParse(amount.replaceAll('.', '')) ?? 0;
-  return number.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+  // Add this method to your _PaymentScreenState class:
+  String _formatAmount(String amount) {
+    if (amount.isEmpty) return '';
+    final number = int.tryParse(amount.replaceAll('.', '')) ?? 0;
+    return number.toString().replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+  }
 }
