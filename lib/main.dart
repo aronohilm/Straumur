@@ -20,7 +20,7 @@ class PaymentApp extends StatelessWidget {
     return MaterialApp(
       title: 'POS Payment',
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      home: const PaymentScreen(), // Changed from LoginPage to PaymentScreen
     );
   }
 }
@@ -34,12 +34,13 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   String _amount = '';
-  String _response = '';
+  String _transactionStatus = ''; 
   bool _isLoading = false;
   int _saleCounter = 1;
   late Timer _timer;
   late String _currentTime;
-
+  String _response = ''; // Add this line to define the _response variable
+  
   final String _apiKey = "AQEqhmfxL43JaxFCw0m/n3Q5qf3Ve59fDIZHTXfy5UT9AM9RlDqYku8lh1U2EMFdWw2+5HzctViMSCJMYAc=-iql6F+AYb1jkHn3zzDBcXZZvYzXFr9wd1iCR9y2JDU0=-i1i{=<;wFH*jLc94NQe";
   final String _url = "https://terminal-api-test.adyen.com/sync";
   final String _poiId = "S1F2-000158242574825";
@@ -104,6 +105,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void _appendDigit(String digit) {
     setState(() {
       _amount += digit;
+      _transactionStatus = ''; // Clear status when entering a new amount
     });
   }
 
@@ -185,12 +187,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
           _response = 'Error: ${response.statusCode}\n${response.body}';
           _isLoading = false;
           _amount = ''; // Clear the amount field on error
+          _transactionStatus = 'Declined'; // Set status to declined on HTTP error
         });
         _showToast('Payment failed: ${response.statusCode}');
         return;
       }
 
       final responseJson = jsonDecode(response.body);
+      
+      // Determine transaction status
+      String transactionStatus = 'Unknown';
+      if (responseJson['SaleToPOIResponse'] != null && 
+          responseJson['SaleToPOIResponse']['PaymentResponse'] != null &&
+          responseJson['SaleToPOIResponse']['PaymentResponse']['Response'] != null) {
+        
+        final responseResult = responseJson['SaleToPOIResponse']['PaymentResponse']['Response']['Result'];
+        transactionStatus = responseResult == 'Success' ? 'Approved' : 'Declined';
+      }
+      
       final logEntry = {
         'timestamp': now.toIso8601String(),
         'sale_id': saleId,
@@ -206,6 +220,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _response = const JsonEncoder.withIndent('  ').convert(responseJson);
         _isLoading = false;
         _amount = ''; // Clear the amount field after successful response
+        _transactionStatus = transactionStatus; // Set the transaction status
       });
 
       await _incrementCounter();
@@ -215,6 +230,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _response = 'Error: $e';
         _isLoading = false;
         _amount = ''; // Clear the amount field on exception
+        _transactionStatus = 'Declined'; // Set status to declined on exception
       });
       _showToast('Network error: $e');
     }
@@ -320,41 +336,52 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    for (var row in [
-                      ['1', '2', '3'],
-                      ['4', '5', '6'],
-                      ['7', '8', '9'],
-                      [' ', '0', '<']
-                    ])
-                      Row(
-                        children: row.map((label) {
-                          return _buildKeypadButton(label, onTap: () {
-                            if (label == '<') {
-                              _backspace();
-                            } else {
-                              _appendDigit(label);
-                            }
-                          });
-                        }).toList(),
-                      ),
-                  ],
-                ),
-              ),
+            // Add status message here with increased spacing
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20), // Increased from 10 to 20
+              child: _transactionStatus.isNotEmpty
+                ? Text(
+                    _transactionStatus,
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
+                    ),
+                  )
+                : const SizedBox(height: 50), // Increased from 30 to 50 for more space
             ),
+            // Removed the SizedBox height: 10 and using Spacer instead to push content up
+            Spacer(flex: 1), // This will push the keyboard up by taking available space
+            // Keyboard section
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                for (var row in [
+                  ['1', '2', '3'],
+                  ['4', '5', '6'],
+                  ['7', '8', '9'],
+                  ['000', '0', '<']
+                ])
+                  Row(
+                    children: row.map((label) {
+                      return _buildKeypadButton(label, onTap: () {
+                        if (label == '<') {
+                          _backspace();
+                        } else {
+                          _appendDigit(label);
+                        }
+                      });
+                    }).toList(),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 20), // Add space between keyboard and send button
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SizedBox(
                 width: double.infinity,
                 height: 80,
                 child: ElevatedButton(
-                  // Change this to directly call _sendPayment instead of _confirmAndSendPayment
                   onPressed: _isLoading ? null : _sendPayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue[800],

@@ -97,16 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             const Divider(),
-            // Add sign out button
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sign Out'),
-              onTap: () {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                );
-              },
-            ),
+            // Sign Out button removed as login page is deactivated
             // You can add more settings widgets here
           ],
         ),
