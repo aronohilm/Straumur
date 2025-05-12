@@ -184,6 +184,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         setState(() {
           _response = 'Error: ${response.statusCode}\n${response.body}';
           _isLoading = false;
+          _amount = ''; // Clear the amount field on error
         });
         _showToast('Payment failed: ${response.statusCode}');
         return;
@@ -204,6 +205,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() {
         _response = const JsonEncoder.withIndent('  ').convert(responseJson);
         _isLoading = false;
+        _amount = ''; // Clear the amount field after successful response
       });
 
       await _incrementCounter();
@@ -212,6 +214,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() {
         _response = 'Error: $e';
         _isLoading = false;
+        _amount = ''; // Clear the amount field on exception
       });
       _showToast('Network error: $e');
     }
@@ -248,11 +251,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.blue[800],
-        title: const Text(''), // Removed "POS Payment" text
+      //appBar: AppBar(
+        //backgroundColor: const Color.fromARGB(255, 21, 192, 106),
+        //title: const Text('AYDEN'), // Removed "POS Payment" text
         // Removed logout button from here
-      ),
+      //),
       body: SafeArea(
         child: Column(
           children: [
@@ -353,9 +356,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 child: ElevatedButton(
                   // Change this to directly call _sendPayment instead of _confirmAndSendPayment
                   onPressed: _isLoading ? null : _sendPayment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[800],
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Send Payment'),
+                      ? const CircularProgressIndicator(color: Color.fromARGB(255, 255, 255, 255))
+                      : const Text('Send Payment', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
             ),
