@@ -336,7 +336,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   controller: TextEditingController(
                     text: _amount.isEmpty
                         ? ''
-                        : '${_formatAmount(_amount)} ISK',
+                        : '${_formatAmount(_amount)} EUR',
                   ),
                   textAlign: TextAlign.left,
                   style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
