@@ -349,7 +349,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             // Reduce vertical padding for status message
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20), // Reduced from 20 to 10
+              padding: const EdgeInsets.symmetric(vertical: 10), // Reduced from 20 to 10
               child: _transactionStatus.isNotEmpty
                 ? Text(
                     _transactionStatus,
@@ -359,11 +359,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
                     ),
                   )
-                : const SizedBox(height: 80), // Reduced from 50 to 20
+                : const SizedBox(height: 40), // Reduced from 80 to 40
             ),
-            
-            // Remove the Spacer completely
-            // const Spacer(flex: 1), <- Remove this line
             
             // Keyboard section with reduced padding
             Padding(
@@ -393,14 +390,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             
             // Reduce height between keypad and send button
-            const SizedBox(height: 60), // Reduced from 20 to 10
+            const SizedBox(height: 20), // Reduced from 60 to 20
             
             // Reduce the height of the send button
             Padding(
-              padding: const EdgeInsets.all(10), // Reduced from 16 to 10
+              padding: const EdgeInsets.all(10), // Keep at 10
               child: SizedBox(
                 width: double.infinity,
-                height: 70, // Reduced from 80 to 70
+                height: 60, // Reduced from 70 to 60
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _sendPayment,
                   style: ElevatedButton.styleFrom(
