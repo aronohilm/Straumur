@@ -104,7 +104,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   void _appendDigit(String digit) {
     setState(() {
-      _amount += digit;
+      // If the digit is "000", add three zeros
+      if (digit == "000") {
+        _amount += "000";
+      } else {
+        _amount += digit;
+      }
       _transactionStatus = ''; // Clear status when entering a new amount
     });
   }
@@ -247,17 +252,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildKeypadButton(String label, {VoidCallback? onTap}) {
+    Color buttonColor = const Color(0xFF002244);
+    Color textColor = Colors.white;
+    
+    // Make the backspace button yellow
+    if (label == '<') {
+      buttonColor = const Color(0xFF002244);
+      textColor = Colors.amber;
+    }
+    
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(6.0),
+        padding: const EdgeInsets.all(6.0), // Reduced from 8.0 to 6.0
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[800],
+            backgroundColor: buttonColor,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(vertical: 20),
+            padding: const EdgeInsets.symmetric(vertical: 25), // Reduced from 30 to 25
           ),
           onPressed: onTap,
-          child: Text(label, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          child: Text(label, style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: textColor)), // Reduced from 32 to 30
         ),
       ),
     );
@@ -266,34 +280,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      //appBar: AppBar(
-        //backgroundColor: const Color.fromARGB(255, 21, 192, 106),
-        //title: const Text('AYDEN'), // Removed "POS Payment" text
-        // Removed logout button from here
-      //),
+      backgroundColor: const Color(0xFF002244), // Dark blue background
       body: SafeArea(
         child: Column(
           children: [
             Container(
-              color: Colors.blue[800],
+              color: const Color(0xFF002244), // Dark blue header
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Replace pizza icon with merchant store name
+                  // Replace merchant store name with "MERCHANT" in all caps
                   const Text(
-                    "Merchant Store",
+                    "MERCHANT",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(_currentTime, style: const TextStyle(color: Colors.white)),
+                  Text(_currentTime, style: const TextStyle(color: Colors.white, fontSize: 22)),
                   Row(
                     children: [
-                      // Removed logs button from here
                       const Icon(Icons.wifi, color: Colors.lightGreenAccent, size: 12),
                       const SizedBox(width: 4),
                       GestureDetector(
@@ -304,41 +312,44 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         },
                         child: const Text(
                           'straumur',
-                          style: TextStyle(color: Colors.lightGreenAccent, decoration: TextDecoration.underline),
+                          style: TextStyle(color: Colors.lightGreenAccent, decoration: TextDecoration.underline, fontSize: 18),
                         ),
                       ),
-                    ],
+                    ], 
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
+            // Reduce the height of the amount field
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                height: 100, // Make the text field bigger
+              child: Container(
+                height: 100,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A3A6A), // Added ligher blue background
+                  border: Border.all(color: Colors.white, width: 2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 child: TextField(
                   readOnly: true,
                   controller: TextEditingController(
                     text: _amount.isEmpty
                         ? ''
-                        : '${_formatAmount(_amount)} EUR',
+                        : '${_formatAmount(_amount)} ISK',
                   ),
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(fontSize: 36),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  textAlign: TextAlign.left,
+                  style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                    border: InputBorder.none,
                   ),
                 ),
               ),
             ),
-            // Add status message here with increased spacing
+            // Reduce vertical padding for status message
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20), // Increased from 10 to 20
+              padding: const EdgeInsets.symmetric(vertical: 20), // Reduced from 20 to 10
               child: _transactionStatus.isNotEmpty
                 ? Text(
                     _transactionStatus,
@@ -348,48 +359,64 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
                     ),
                   )
-                : const SizedBox(height: 50), // Increased from 30 to 50 for more space
+                : const SizedBox(height: 80), // Reduced from 50 to 20
             ),
-            // Removed the SizedBox height: 10 and using Spacer instead to push content up
-            Spacer(flex: 1), // This will push the keyboard up by taking available space
-            // Keyboard section
-            Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                for (var row in [
-                  ['1', '2', '3'],
-                  ['4', '5', '6'],
-                  ['7', '8', '9'],
-                  ['000', '0', '<']
-                ])
-                  Row(
-                    children: row.map((label) {
-                      return _buildKeypadButton(label, onTap: () {
-                        if (label == '<') {
-                          _backspace();
-                        } else {
-                          _appendDigit(label);
-                        }
-                      });
-                    }).toList(),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 20), // Add space between keyboard and send button
+            
+            // Remove the Spacer completely
+            // const Spacer(flex: 1), <- Remove this line
+            
+            // Keyboard section with reduced padding
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  for (var row in [
+                    ['1', '2', '3'],
+                    ['4', '5', '6'],
+                    ['7', '8', '9'],
+                    ['000', '0', '<']
+                  ])
+                    Row(
+                      children: row.map((label) {
+                        return _buildKeypadButton(label, onTap: () {
+                          if (label == '<') {
+                            _backspace();
+                          } else {
+                            _appendDigit(label);
+                          }
+                        });
+                      }).toList(),
+                    ),
+                ],
+              ),
+            ),
+            
+            // Reduce height between keypad and send button
+            const SizedBox(height: 60), // Reduced from 20 to 10
+            
+            // Reduce the height of the send button
+            Padding(
+              padding: const EdgeInsets.all(10), // Reduced from 16 to 10
               child: SizedBox(
                 width: double.infinity,
-                height: 80,
+                height: 70, // Reduced from 80 to 70
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _sendPayment,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Color.fromARGB(255, 255, 255, 255))
-                      : const Text('Send Payment', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ? const CircularProgressIndicator(color: Color.fromARGB(255, 102, 4, 222))
+                      : const Text(
+                          'SENDA Í POSA',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF002244),
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -399,11 +426,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  // Add this method to your _PaymentScreenState class:
+  // Update the format method to match the new style
   String _formatAmount(String amount) {
-    if (amount.isEmpty) return '';
-    final number = int.tryParse(amount.replaceAll('.', '')) ?? 0;
-    return number.toString().replaceAllMapped(
+    if (amount.isEmpty) return '0';
+    final number = int.tryParse(amount) ?? 0;
+    
+    // Format with dot as thousands separator
+    final formattedNumber = number.toString().replaceAllMapped(
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
+    
+    return formattedNumber;
   }
 }
