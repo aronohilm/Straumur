@@ -143,6 +143,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _response = 'Sending...';
     });
 
+    // Load saved settings
+    final prefs = await SharedPreferences.getInstance();
+    final endpoint = prefs.getString('endpoint') ?? _url;
+    final apiKey = prefs.getString('api_key') ?? _apiKey;
+    final poiId = prefs.getString('selected_terminal') ?? _poiId;
+    
     final now = DateTime.now().toUtc();
     final saleId = 'FlutterTest${_saleCounter.toString().padLeft(3, '0')}';
     final serviceId = '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
@@ -290,19 +296,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Replace merchant store name with "MERCHANT" in all caps
-                  const Text(
-                    "MERCHANT",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                  // Make the image smaller
+                  SizedBox(
+                    width: 60, // Reduced from 80 to 60
+                    child: Image.asset(
+                      'assets/images/Straumur_Symbol_Neon.png',
+                      height: 25, // Reduced from 30 to 25
+                      fit: BoxFit.contain,
                     ),
                   ),
                   Text(_currentTime, style: const TextStyle(color: Colors.white, fontSize: 22)),
                   Row(
                     children: [
-                      const Icon(Icons.wifi, color: Colors.lightGreenAccent, size: 12),
                       const SizedBox(width: 4),
                       GestureDetector(
                         onTap: () {
@@ -312,7 +317,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         },
                         child: const Text(
                           'straumur',
-                          style: TextStyle(color: Colors.lightGreenAccent, decoration: TextDecoration.underline, fontSize: 18),
+                          style: TextStyle(
+                            color: Color(0xFFDAFDA3), // Changed from Colors.lightGreenAccent to #DAFDA3
+                            decoration: TextDecoration.underline,
+                            fontSize: 18
+                          ),
                         ),
                       ),
                     ], 
@@ -390,14 +399,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             
             // Reduce height between keypad and send button
-            const SizedBox(height: 20), // Reduced from 60 to 20
+            const SizedBox(height: 40), // Reduced from 60 to 20
             
             // Reduce the height of the send button
             Padding(
               padding: const EdgeInsets.all(10), // Keep at 10
               child: SizedBox(
                 width: double.infinity,
-                height: 60, // Reduced from 70 to 60
+                height: 50, // Reduced from 70 to 60
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _sendPayment,
                   style: ElevatedButton.styleFrom(
