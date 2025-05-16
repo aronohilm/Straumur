@@ -10,7 +10,14 @@ import 'login_page.dart';
 import 'placeholder_screen.dart';
 import 'settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'terminal_connection_page.dart';  // Add this import statement
+import 'terminal_connection_page.dart';
+// Add these imports for the page classes used in the drawer
+import 'faerslulisti_page.dart';
+import 'endurgreidsla_page.dart';
+import 'simgreidsla_page.dart';
+import 'reikningvel_page.dart';
+import 'qr_skanni_page.dart';
+import 'sjoppan_page.dart';
 
 void main() => runApp(const PaymentApp());
 
@@ -325,7 +332,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Navigator.pop(context); // Close the drawer first
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Færslulisti')),
+                        MaterialPageRoute(builder: (context) => const FaerslulistiPage()),
                       );
                     },
                   ),
@@ -336,7 +343,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Navigator.pop(context); // Close the drawer first
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Endurgreiðsla')),
+                        MaterialPageRoute(builder: (context) => const EndurgreidslaPage()),
                       );
                     },
                   ),
@@ -347,7 +354,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Navigator.pop(context); // Close the drawer first
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Símgreiðsla')),
+                        MaterialPageRoute(builder: (context) => const SimgreidslaPage()),
                       );
                     },
                   ),
@@ -358,7 +365,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Navigator.pop(context); // Close the drawer first
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Reiknivél')),
+                        MaterialPageRoute(builder: (context) => const ReikningvelPage()),
                       );
                     },
                   ),
@@ -369,7 +376,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Navigator.pop(context); // Close the drawer first
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Sjoppan')),
+                        MaterialPageRoute(builder: (context) => const SjoppanPage()),
                       );
                     },
                   ),
@@ -380,7 +387,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Navigator.pop(context); // Close the drawer first
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'QR-Skanni')),
+                        MaterialPageRoute(builder: (context) => const QRSkanniPage()),
                       );
                     },
                   ),
@@ -508,7 +515,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   controller: TextEditingController(
                     text: _amount.isEmpty
                         ? ''
-                        : '${_formatAmount(_amount)} EUR',
+                        : '${(_amount)} EUR',
                   ),
                   textAlign: TextAlign.right, // Changed from TextAlign.left to TextAlign.right
                   style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
@@ -596,13 +603,5 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       ),
     );
-  }
-
-  // Add this function to format the amount with commas
-  String _formatAmount(String amount) {
-    // Convert to double
-    double value = double.parse(amount) / 100;
-    // Format with 2 decimal places
-    return value.toStringAsFixed(2);
   }
 }
