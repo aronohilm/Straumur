@@ -7,8 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'login_page.dart';
+import 'placeholder_screen.dart';
 import 'settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'terminal_connection_page.dart';  // Add this import statement
 
 void main() => runApp(const PaymentApp());
 
@@ -287,6 +289,162 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF002244), // Dark blue background
+      endDrawer: Drawer(
+        child: Column(  // Changed from ListView to Column to allow for bottom positioning
+          children: [
+            Expanded(  // This will contain the scrollable list of menu items
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  DrawerHeader(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF002B5B),
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/Straumur_Secondary_Neon.png',
+                        fit: BoxFit.contain,
+                        height: 50,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Error loading image: $error');
+                          return const Text(
+                            'straumur',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.receipt_long),
+                    title: const Text('Færslulisti'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Færslulisti')),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.money),
+                    title: const Text('Endurgreiðsla'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Endurgreiðsla')),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.phone),
+                    title: const Text('Símgreiðsla'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Símgreiðsla')),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.calculate),
+                    title: const Text('Reiknivél'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Reiknivél')),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.store),
+                    title: const Text('Sjoppan'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'Sjoppan')),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.qr_code_scanner),
+                    title: const Text('QR-Skanni'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PlaceholderScreen(title: 'QR-Skanni')),
+                      );
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.settings),
+                    title: const Text('Stillingar'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SettingsPage()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            // Exit button at the bottom of the drawer
+            Container(
+              width: double.infinity,
+              color: const Color(0xFFE74C3C),  // Red background
+              child: ListTile(
+                leading: const Icon(Icons.exit_to_app, color: Colors.white),
+                title: const Text('ÚTSKRÁNING---', 
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  )
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer first
+                  // Show confirmation dialog
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Loka Appi'),
+                        content: const Text('Ertu viss um að þú viljir loka appinu?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the dialog
+                            },
+                            child: const Text('Hætta við'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the dialog
+                              // Exit the app
+                              exit(0);
+                            },
+                            child: const Text('Loka', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -296,35 +454,40 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Make the image smaller
-                  SizedBox(
-                    width: 60, // Reduced from 80 to 60
-                    child: Image.asset(
-                      'assets/images/Straumur_Symbol_Neon.png',
-                      height: 25, // Reduced from 30 to 25
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  Text(_currentTime, style: const TextStyle(color: Colors.white, fontSize: 22)),
+                  // Logo and Straumur text side by side
                   Row(
                     children: [
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const SettingsPage()),
-                          );
-                        },
-                        child: const Text(
-                          'straumur',
-                          style: TextStyle(
-                            color: Color(0xFFDAFDA3), // Changed from Colors.lightGreenAccent to #DAFDA3
-                            decoration: TextDecoration.underline,
-                            fontSize: 18
-                          ),
+                      SizedBox(
+                        width: 40, // Make logo smaller
+                        child: Image.asset(
+                          'assets/images/Straumur_Symbol_Neon.png',
+                          height: 25,
+                          fit: BoxFit.contain,
                         ),
                       ),
-                    ], 
+                      const SizedBox(width: 10), // Space between logo and text
+                      const Text(
+                        'straumur',
+                        style: TextStyle(
+                          color: Color(0xFFDAFDA3),
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Hamburger menu on the right
+                  Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(
+                        Icons.menu,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: () {
+                        Scaffold.of(context).openEndDrawer();
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -347,7 +510,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ? ''
                         : '${_formatAmount(_amount)} EUR',
                   ),
-                  textAlign: TextAlign.left,
+                  textAlign: TextAlign.right, // Changed from TextAlign.left to TextAlign.right
                   style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
                   decoration: const InputDecoration(
                     contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
@@ -426,21 +589,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
               ),
             ),
+            
+            // Remove the spacer and exit button that were here
+            // The Spacer() and Padding() widgets with the exit button have been removed
           ],
         ),
       ),
     );
   }
 
-  // Update the format method to match the new style
+  // Add this function to format the amount with commas
   String _formatAmount(String amount) {
-    if (amount.isEmpty) return '0';
-    final number = int.tryParse(amount) ?? 0;
-    
-    // Format with dot as thousands separator
-    final formattedNumber = number.toString().replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.');
-    
-    return formattedNumber;
+    // Convert to double
+    double value = double.parse(amount) / 100;
+    // Format with 2 decimal places
+    return value.toStringAsFixed(2);
   }
 }
