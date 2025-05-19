@@ -499,7 +499,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 10),
             // Reduce the height of the amount field
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

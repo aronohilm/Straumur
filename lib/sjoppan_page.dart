@@ -32,63 +32,63 @@ class _SjoppanPageState extends State<SjoppanPage> {
       name: 'Viking Gull',
       price: 4.50,
       category: 'Áfengi',
-      color: const Color(0xFFE8F5C8), // Light green
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
     Product(
       id: 'A2',
       name: 'Rauðvín',
       price: 8.95,
       category: 'Áfengi',
-      color: const Color(0xFFE8F5C8),
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
     Product(
       id: 'B1',
       name: 'Hvítvín',
       price: 7.95,
       category: 'Áfengi',
-      color: const Color(0xFFE8F5C8),
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
     Product(
       id: 'B2',
       name: 'Nóa Kropp',
       price: 2.50,
       category: 'Sælgæti',
-      color: const Color(0xFFE8F5C8),
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
     Product(
       id: 'C1',
       name: 'Trítlar',
       price: 1.95,
       category: 'Sælgæti',
-      color: const Color(0xFFE8F5C8),
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
     Product(
       id: 'C2',
       name: 'Coke Zero',
       price: 2.25,
       category: 'Gos',
-      color: const Color(0xFFE8F5C8),
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
     Product(
       id: 'D1',
       name: 'Pepsi Max',
       price: 2.25,
       category: 'Gos',
-      color: const Color(0xFFE8F5C8),
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
     Product(
       id: 'D2',
       name: 'Appelsín',
       price: 2.25,
       category: 'Gos',
-      color: const Color(0xFFE8F5C8),
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
     Product(
       id: 'E1',
       name: 'Prins Póló',
       price: 1.50,
       category: 'Sælgæti',
-      color: const Color(0xFFE8F5C8),
+      color: const Color(0xFFDAFDA3), // Updated color
     ),
   ];
 
@@ -850,9 +850,13 @@ class _SjoppanPageState extends State<SjoppanPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF002244),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(40),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
             onPressed: () {
-              // Validate inputs
+              // Validate input fields here if needed
               if (idController.text.isEmpty || 
                   nameController.text.isEmpty || 
                   priceController.text.isEmpty) {
@@ -865,54 +869,65 @@ class _SjoppanPageState extends State<SjoppanPage> {
                 return;
               }
               
-              // Parse price
-              final price = int.tryParse(priceController.text);
-              if (price == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Verð verður að vera heiltala'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-              
-              // Create or update product
-              final newProduct = Product(
-                id: idController.text,
-                name: nameController.text,
-                price: price.toDouble(),
-                category: selectedCategory,
-                color: const Color(0xFFE8F5C8),
-              );
-              
-              setState(() {
-                if (isEditing) {
-                  // Update existing product
+              if (isEditing && product != null) {
+                // Update the product in the list
+                setState(() {
                   final index = _products.indexWhere((p) => p.id == product.id);
                   if (index != -1) {
-                    _products[index] = newProduct;
+                    _products[index] = Product(
+                      id: product.id,
+                      name: nameController.text,
+                      price: double.tryParse(priceController.text) ?? product.price,
+                      category: selectedCategory,
+                      color: product.color,
+                    );
                   }
-                } else {
-                  // Add new product
-                  _products.add(newProduct);
+                });
+                Navigator.pop(context); // Close the dialog
+                // Optionally show a SnackBar for feedback
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Product updated!')),
+                );
+              } else {
+                // Parse price
+                final price = double.tryParse(priceController.text);
+                if (price == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Verð verður að vera tala'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
                 }
-              });
-              
-              // Update the modal state to reflect changes
-              setModalState(() {});
-              
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isEditing ? 'Vöru breytt!' : 'Vöru bætt við!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+                // Add new product
+                final newProduct = Product(
+                  id: idController.text,
+                  name: nameController.text,
+                  price: price,
+                  category: selectedCategory,
+                  color: const Color(0xFFE8F5C8),
+                );
+                setState(() {
+                  _products.add(newProduct);
+                });
+                setModalState(() {});
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Vara bætt við!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
             },
             child: Text(
               isEditing ? 'Uppfæra' : 'Bæta við',
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
             ),
           ),
           // Transaction status overlay
@@ -1126,29 +1141,36 @@ class _SjoppanPageState extends State<SjoppanPage> {
               ),
             ),
           
-          // Payment button
-          Container(
-            width: double.infinity,
-            color: Colors.white,
-            padding: const EdgeInsets.all(8),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _cartItems.isEmpty ? Colors.grey : const Color(0xFF002244),
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              onPressed: _isProcessingPayment ? null : _processPayment,
-              child: _isProcessingPayment
-                ? const CircularProgressIndicator(color: Colors.white)
-                : const Text(
-                  'GREIÐA',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+          // Payment button (new design)
+          if (_cartItems.isNotEmpty)
+            Container(
+              color: Colors.white, // White background for the bar
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+              child: Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF002244), // Dark blue button
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: _isProcessingPayment ? null : _processPayment,
+                  child: const Text(
+                    'GREIÐA',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white, // White text
+                      letterSpacing: 2,
+                    ),
                   ),
                 ),
+              ),
             ),
-          ),
           // Transaction status overlay
           if (_showTransactionStatus)
             Container(
