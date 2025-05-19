@@ -14,6 +14,8 @@ class SjoppanPage extends StatefulWidget {
 class _SjoppanPageState extends State<SjoppanPage> {
   // Payment processing state
   bool _isProcessingPayment = false;
+  String _transactionStatus = '';
+  bool _showTransactionStatus = false;
   // Selected category filter
   String _selectedCategory = 'Allt';
   
@@ -346,65 +348,13 @@ class _SjoppanPageState extends State<SjoppanPage> {
         Uri.parse(_url),
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': _apiKey,
+          'X-API-Key': _apiKey,
         },
         body: jsonEncode(requestPayload),
       );
       
       // Log the response
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        logEntry['response'] = responseData;
-        
-        // Append to log file
-        await logFile.writeAsString('${jsonEncode(logEntry)}\n', mode: FileMode.append);
-        
-        // Check if payment was successful
-        if (responseData != null && 
-            responseData['SaleToPOIResponse'] != null && 
-            responseData['SaleToPOIResponse']['PaymentResponse'] != null && 
-            responseData['SaleToPOIResponse']['PaymentResponse']['Response'] != null &&
-            responseData['SaleToPOIResponse']['PaymentResponse']['Response']['Result'] == 'Success') {
-          
-          // Payment successful
-          setState(() {
-            _cartItems.clear();
-            _isProcessingPayment = false;
-          });
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Greiðsla tókst!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          // Payment failed or declined - Add more detailed error logging
-          String errorMessage = 'Unknown error';
-          
-          if (responseData != null && responseData['SaleToPOIResponse'] != null) {
-            var paymentResponse = responseData['SaleToPOIResponse']['PaymentResponse'];
-            if (paymentResponse != null && paymentResponse['Response'] != null) {
-              errorMessage = paymentResponse['Response']['AdditionalResponse'] ?? 
-                            paymentResponse['Response']['ErrorCondition'] ?? 
-                            'Unknown error';
-            }
-          }
-          
-          print('Payment error details: $responseData');
-          
-          setState(() {
-            _isProcessingPayment = false;
-          });
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Greiðsla hafnað: $errorMessage'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } else {
+      if (response.statusCode != 200) {
         // API request failed - Add more detailed error logging
         logEntry['error'] = {
           'statusCode': response.statusCode,
@@ -424,7 +374,45 @@ class _SjoppanPageState extends State<SjoppanPage> {
             backgroundColor: Colors.red,
           ),
         );
+        return;
       }
+      
+      final responseJson = jsonDecode(response.body);
+      logEntry['response'] = responseJson;
+      
+      // Append to log file
+      await logFile.writeAsString('${jsonEncode(logEntry)}\n', mode: FileMode.append);
+      
+      // Determine transaction status
+      String transactionStatus = 'Unknown';
+      if (responseJson['SaleToPOIResponse'] != null && 
+          responseJson['SaleToPOIResponse']['PaymentResponse'] != null &&
+          responseJson['SaleToPOIResponse']['PaymentResponse']['Response'] != null) {
+        
+        final responseResult = responseJson['SaleToPOIResponse']['PaymentResponse']['Response']['Result'];
+        transactionStatus = responseResult == 'Success' ? 'Approved' : 'Declined';
+      }
+      
+      // Show status with a more prominent banner instead of a snackbar
+      setState(() {
+        _isProcessingPayment = false;
+        _transactionStatus = transactionStatus;
+        _showTransactionStatus = true;
+        
+        // Clear cart if payment was approved
+        if (transactionStatus == 'Approved') {
+          _cartItems.clear();
+        }
+        
+        // Auto-hide the status after 5 seconds
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            setState(() {
+              _showTransactionStatus = false;
+            });
+          }
+        });
+      });
     } catch (e) {
       // Handle errors with better logging
       print('Exception during payment processing: $e');
@@ -707,6 +695,23 @@ class _SjoppanPageState extends State<SjoppanPage> {
               style: TextStyle(color: Colors.white),
             ),
           ),
+          // Transaction status overlay
+          if (_showTransactionStatus)
+            Container(
+              width: double.infinity,
+              height: 80,
+              color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
+              child: Center(
+                child: Text(
+                  'Greiðsla: $_transactionStatus',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -755,6 +760,23 @@ class _SjoppanPageState extends State<SjoppanPage> {
               style: TextStyle(color: Colors.white),
             ),
           ),
+          // Transaction status overlay
+          if (_showTransactionStatus)
+            Container(
+              width: double.infinity,
+              height: 80,
+              color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
+              child: Center(
+                child: Text(
+                  'Greiðsla: $_transactionStatus',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -893,6 +915,23 @@ class _SjoppanPageState extends State<SjoppanPage> {
               style: const TextStyle(color: Colors.white),
             ),
           ),
+          // Transaction status overlay
+          if (_showTransactionStatus)
+            Container(
+              width: double.infinity,
+              height: 80,
+              color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
+              child: Center(
+                child: Text(
+                  'Greiðsla: $_transactionStatus',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -922,6 +961,23 @@ class _SjoppanPageState extends State<SjoppanPage> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Hætta við'),
           ),
+          // Transaction status overlay
+          if (_showTransactionStatus)
+            Container(
+              width: double.infinity,
+              height: 80,
+              color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
+              child: Center(
+                child: Text(
+                  'Greiðsla: $_transactionStatus',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -951,7 +1007,24 @@ class _SjoppanPageState extends State<SjoppanPage> {
           ),
         ],
       ),
-      body: Column(
+      bottomNavigationBar: _showTransactionStatus ? Container(
+        height: 50,
+        width: double.infinity,
+        color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
+        child: Center(
+          child: Text(
+            'Greiðsla: $_transactionStatus',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ) : null,
+      body: Stack(
+        children: [
+          Column(
         children: [
           // Category filter
           Padding(
@@ -1076,9 +1149,26 @@ class _SjoppanPageState extends State<SjoppanPage> {
                 ),
             ),
           ),
+          // Transaction status overlay
+          if (_showTransactionStatus)
+            Container(
+              width: double.infinity,
+              height: 80,
+              color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
+              child: Center(
+                child: Text(
+                  'Greiðsla: $_transactionStatus',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
-    );
+      ]));
   }
 
   Widget _buildCategoryButton(String category) {
