@@ -569,8 +569,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             
             // Reduce height between keypad and send button
-            const SizedBox(height: 40), // Reduced from 60 to 20
-            
+            const SizedBox(height: 10),
             // Reduce the height of the send button
             Padding(
               padding: const EdgeInsets.all(10), // Keep at 10
