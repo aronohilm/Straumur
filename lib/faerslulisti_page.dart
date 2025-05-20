@@ -164,9 +164,30 @@ class _FaerslulistiPageState extends State<FaerslulistiPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadLogs,
-            tooltip: 'Refresh',
+            icon: const Icon(Icons.print),
+            tooltip: 'Prenta heildarlista',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Prenta heildarlista'),
+                  content: const Text('Viltu prenta heildarlistann?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Hætta við'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Add your print logic here
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Prenta'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
