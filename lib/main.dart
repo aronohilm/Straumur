@@ -266,34 +266,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildKeypadButton(String label, {VoidCallback? onTap}) {
-    Color buttonColor = const Color(0xFF002244);
-    Color textColor = Colors.white;
-    
-    // Make the backspace button yellow
-    if (label == '<') {
-      buttonColor = const Color(0xFF002244);
-      textColor = Colors.amber;
-    }
-    
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(6.0), // Reduced from 8.0 to 6.0
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: buttonColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(vertical: 25), // Reduced from 30 to 25
-          ),
-          onPressed: onTap,
-          child: Text(label, style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: textColor)), // Reduced from 32 to 30
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Get screen size for responsive layout
+    final screenSize = MediaQuery.of(context).size;
+    
     return Scaffold(
       backgroundColor: const Color(0xFF002244), // Dark blue background
       endDrawer: Drawer(
@@ -380,7 +357,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       );
                     },
                   ),
-                  ListTile(
+                  /*ListTile(
                     leading: const Icon(Icons.qr_code_scanner),
                     title: const Text('QR-Skanni'),
                     onTap: () {
@@ -390,7 +367,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         MaterialPageRoute(builder: (context) => const QRSkanniPage()),
                       );
                     },
-                  ),
+                  ), */
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.settings),
@@ -412,7 +389,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               color: const Color(0xFFE74C3C),  // Red background
               child: ListTile(
                 leading: const Icon(Icons.exit_to_app, color: Colors.white),
-                title: const Text('ÚTSKRÁNING---', 
+                title: const Text('LOKA APPI', 
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -455,6 +432,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Header - fixed at top
             Container(
               color: const Color(0xFF002244), // Dark blue header
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -499,106 +477,165 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-            // Reduce the height of the amount field
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                height: 100,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0A3A6A), // Added ligher blue background
-                  border: Border.all(color: Colors.white, width: 2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: TextField(
-                  readOnly: true,
-                  controller: TextEditingController(
-                    text: _amount.isEmpty
-                        ? ''
-                        : '${(_amount)} EUR',
-                  ),
-                  textAlign: TextAlign.right, // Changed from TextAlign.left to TextAlign.right
-                  style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-            ),
-            // Reduce vertical padding for status message
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10), // Reduced from 20 to 10
-              child: _transactionStatus.isNotEmpty
-                ? Text(
-                    _transactionStatus,
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
-                    ),
-                  )
-                : const SizedBox(height: 40), // Reduced from 80 to 40
-            ),
             
-            // Keyboard section with reduced padding
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+            // Flexible content area that will adjust based on screen size
+            Expanded(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  for (var row in [
-                    ['1', '2', '3'],
-                    ['4', '5', '6'],
-                    ['7', '8', '9'],
-                    ['000', '0', '<']
-                  ])
-                    Row(
-                      children: row.map((label) {
-                        return _buildKeypadButton(label, onTap: () {
-                          if (label == '<') {
-                            _backspace();
-                          } else {
-                            _appendDigit(label);
-                          }
-                        });
-                      }).toList(),
+                  // Input field - takes a percentage of available space
+                  Padding(
+                    padding: EdgeInsets.all(screenSize.width * 0.04), // Responsive padding
+                    child: Container(
+                      height: screenSize.height * 0.12, // Responsive height
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0A3A6A),
+                        border: Border.all(color: Colors.white, width: 2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: TextField(
+                        readOnly: true,
+                        controller: TextEditingController(
+                          text: _amount.isEmpty
+                              ? ''
+                              : '${(_amount)} EUR',
+                        ),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: screenSize.width * 0.08, // Responsive font size
+                          color: Colors.white, 
+                          fontWeight: FontWeight.bold
+                        ),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                          border: InputBorder.none,
+                        ),
+                      ),
                     ),
+                  ),
+                  
+                  // Status message
+                  SizedBox(
+                    height: screenSize.height * 0.06, // Responsive height
+                    child: _transactionStatus.isNotEmpty
+                      ? Text(
+                          _transactionStatus,
+                          style: TextStyle(
+                            fontSize: screenSize.width * 0.06, // Responsive font size
+                            fontWeight: FontWeight.bold,
+                            color: _transactionStatus == 'Approved' ? Colors.green : Colors.red,
+                          ),
+                        )
+                      : const SizedBox(), // Empty space if no status
+                  ),
+                  
+                  // Keypad - takes most of the remaining space
+                  Expanded(
+                    flex: 5, // Give keypad more space
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenSize.width * 0.03, // Responsive padding
+                        vertical: screenSize.height * 0.01,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Evenly space the rows
+                        children: [
+                          for (var row in [
+                            ['1', '2', '3'],
+                            ['4', '5', '6'],
+                            ['7', '8', '9'],
+                            ['000', '0', '<']
+                          ])
+                            Expanded(
+                              child: Row(
+                                children: row.map((label) {
+                                  return _buildKeypadButton(label, onTap: () {
+                                    if (label == '<') {
+                                      _backspace();
+                                    } else {
+                                      _appendDigit(label);
+                                    }
+                                  });
+                                }).toList(),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  // Send button - fixed at bottom
+                  Padding(
+                    padding: EdgeInsets.all(screenSize.width * 0.03), // Responsive padding
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: screenSize.height * 0.08, // Responsive height
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF002244),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: _isLoading ? null : _sendPayment,
+                        child: _isLoading
+                            ? const CircularProgressIndicator()
+                            : Text(
+                                "Senda í posa",
+                                style: TextStyle(
+                                  fontSize: screenSize.width * 0.06, // Responsive font size
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            
-            // Reduce height between keypad and send button
-            const SizedBox(height: 10),
-            // Reduce the height of the send button
-            Padding(
-              padding: const EdgeInsets.all(10), // Keep at 10
-              child: SizedBox(
-                width: double.infinity,
-                height: 50, // Reduced from 70 to 60
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _sendPayment,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Color.fromARGB(255, 102, 4, 222))
-                      : const Text(
-                          'SENDA Í POSA',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF002244),
-                          ),
-                        ),
-                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Update the keypad button to be responsive
+  Widget _buildKeypadButton(String label, {VoidCallback? onTap}) {
+    Color buttonColor = const Color(0xFF002244);
+    Color textColor = Colors.white;
+    
+    // Make the backspace button yellow
+    if (label == '<') {
+      buttonColor = const Color(0xFF002244);
+      textColor = Colors.amber;
+    }
+    
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(4.0), // Reduced padding for more space
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: buttonColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: EdgeInsets.zero, // Remove padding to maximize button size
+          ),
+          onPressed: onTap,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                label, 
+                style: TextStyle(
+                  fontSize: 30, 
+                  fontWeight: FontWeight.bold, 
+                  color: textColor
+                )
               ),
             ),
-            
-            // Remove the spacer and exit button that were here
-            // The Spacer() and Padding() widgets with the exit button have been removed
-          ],
+          ),
         ),
       ),
     );
