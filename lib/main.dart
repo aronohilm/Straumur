@@ -1,23 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:http/io_client.dart';
+import 'package:http/io_client.dart' as http show IOClient;
+
 import 'logs_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'login_page.dart';
-import 'placeholder_screen.dart';
-import 'settings.dart';
+//import 'login_page.dart';
+//import 'placeholder_screen.dart';
+//import 'settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'terminal_connection_page.dart';
+//import 'terminal_connection_page.dart';
 // Add these imports for the page classes used in the drawer
 import 'faerslulisti_page.dart';
 import 'endurgreidsla_page.dart';
 import 'simgreidsla_page.dart';
 import 'reikningvel_page.dart';
-import 'qr_skanni_page.dart';
+//import 'qr_skanni_page.dart';
 import 'sjoppan_page.dart';
+import 'connect_page.dart';
 
 void main() => runApp(const PaymentApp());
 
@@ -50,10 +54,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   late String _currentTime;
   String _response = ''; // Add this line to define the _response variable
   
-  final String _apiKey = "AQEqhmfxL43JaxFCw0m/n3Q5qf3Ve59fDIZHTXfy5UT9AM9RlDqYku8lh1U2EMFdWw2+5HzctViMSCJMYAc=-iql6F+AYb1jkHn3zzDBcXZZvYzXFr9wd1iCR9y2JDU0=-i1i{=<;wFH*jLc94NQe";
   final String _url = "https://terminal-api-test.adyen.com/sync";
-  final String _poiId = "S1F2-000158242574825";
-  String? _selectedTerminal;
 
   @override
   void initState() {
@@ -65,16 +66,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _currentTime = _getTimeString();
       });
     });
-    _loadSelectedTerminal();
   }
-
-  Future<void> _loadSelectedTerminal() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _selectedTerminal = prefs.getString('selected_terminal');
-    });
-  }
-  // Use _selectedTerminal in your payment logic
 
   @override
   void dispose() {
@@ -155,8 +147,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Load saved settings
     final prefs = await SharedPreferences.getInstance();
     final endpoint = prefs.getString('endpoint') ?? _url;
-    final apiKey = prefs.getString('api_key') ?? _apiKey;
-    final poiId = prefs.getString('selected_terminal') ?? _poiId;
+    final poiId = prefs.getString('selected_terminal');
+
+    if (poiId == null || poiId.isEmpty) {
+      _showToast('Please set the Terminal ID on the Connect page.');
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
     
     final now = DateTime.now().toUtc();
     final saleId = 'FlutterTest${_saleCounter.toString().padLeft(3, '0')}';
@@ -173,7 +172,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           "MessageType": "Request",
           "SaleID": saleId,
           "ServiceID": serviceId,
-          "POIID": _poiId
+          "POIID": poiId
         },
         "PaymentRequest": {
           "SaleData": {
@@ -192,15 +191,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     };
 
-    try {
-      final response = await http.post(
-        Uri.parse(_url),
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': _apiKey,
-        },
-        body: jsonEncode(payload),
-      );
+debugPrint("PAYLOAD: ${jsonEncode(payload)}");
+
+try {
+  // Accept self-signed certificates for local dev only
+  final ioClient = HttpClient()
+    ..badCertificateCallback = (cert, host, port) => true;
+  final client = http.IOClient(ioClient);
+
+  final response = await client.post(
+    Uri.parse("https://localhost:8443/nexo"),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode(payload),
+  );
+
+  debugPrint("STATUS: ${response.statusCode}");
+  debugPrint("RESPONSE BODY: ${response.body}");
+
 
       if (response.statusCode != 200) {
         setState(() {
@@ -370,6 +379,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ), */
                   const Divider(),
                   ListTile(
+                    leading: const Icon(Icons.connected_tv),
+                    title: const Text('Connect'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ConnectPage()),
+                      );
+                    },
+                  ),
+                  /*ListTile(
                     leading: const Icon(Icons.settings),
                     title: const Text('Stillingar'),
                     onTap: () {
@@ -379,7 +399,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         MaterialPageRoute(builder: (context) => const SettingsPage()),
                       );
                     },
-                  ),
+                  ),*/
                 ],
               ),
             ),

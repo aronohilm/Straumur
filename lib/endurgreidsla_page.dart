@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,10 +23,7 @@ class _EndurgreidslaPageState extends State<EndurgreidslaPage> {
   late Timer _timer;
   late String _currentTime;
   String _response = '';
-  final String _apiKey = "AQEqhmfxL43JaxFCw0m/n3Q5qf3Ve59fDIZHTXfy5UT9AM9RlDqYku8lh1U2EMFdWw2+5HzctViMSCJMYAc=-iql6F+AYb1jkHn3zzDBcXZZvYzXFr9wd1iCR9y2JDU0=-i1i{=<;wFH*jLc94NQe";
   final String _url = "https://terminal-api-test.adyen.com/sync";
-  final String _poiId = "S1F2-000158242574825";
-  String? _selectedTerminal;
 
   @override
   void initState() {
@@ -36,14 +34,6 @@ class _EndurgreidslaPageState extends State<EndurgreidslaPage> {
       setState(() {
         _currentTime = _getTimeString();
       });
-    });
-    _loadSelectedTerminal();
-  }
-
-  Future<void> _loadSelectedTerminal() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _selectedTerminal = prefs.getString('selected_terminal');
     });
   }
 
@@ -123,9 +113,15 @@ class _EndurgreidslaPageState extends State<EndurgreidslaPage> {
     });
 
     final prefs = await SharedPreferences.getInstance();
-    final endpoint = prefs.getString('endpoint') ?? _url;
-    final apiKey = prefs.getString('api_key') ?? _apiKey;
-    final poiId = prefs.getString('selected_terminal') ?? _poiId;
+    final poiId = prefs.getString('selected_terminal');
+
+    if (poiId == null || poiId.isEmpty) {
+      _showToast('Please set the Terminal ID on the Connect page.');
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
 
     final now = DateTime.now().toUtc();
     final saleId = 'Refund${_refundCounter.toString().padLeft(3, '0')}';
@@ -165,11 +161,15 @@ class _EndurgreidslaPageState extends State<EndurgreidslaPage> {
     };
 
     try {
-      final response = await http.post(
-        Uri.parse(endpoint),
+      // Accept self-signed certificates for local dev only
+      final ioClient = HttpClient()
+        ..badCertificateCallback = (cert, host, port) => true;
+      final client = IOClient(ioClient);
+
+      final response = await client.post(
+        Uri.parse("https://localhost:8443/nexo"),
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
         },
         body: jsonEncode(payload),
       );

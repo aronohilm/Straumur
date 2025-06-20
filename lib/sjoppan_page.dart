@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/io_client.dart';
 
 class SjoppanPage extends StatefulWidget {
   const SjoppanPage({super.key});
@@ -25,73 +27,67 @@ class _SjoppanPageState extends State<SjoppanPage> {
   // List of available categories
   List<String> _categories = ['Allt', 'Gos', 'Áfengi', 'Sælgæti'];
   
-  // Product database - in a real app, this would come from a backend
-  final List<Product> _products = [
-    Product(
-      id: 'A1',
-      name: 'Viking Gull',
-      price: 4.50,
-      category: 'Áfengi',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-    Product(
-      id: 'A2',
-      name: 'Rauðvín',
-      price: 8.95,
-      category: 'Áfengi',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-    Product(
-      id: 'B1',
-      name: 'Hvítvín',
-      price: 7.95,
-      category: 'Áfengi',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-    Product(
-      id: 'B2',
-      name: 'Nóa Kropp',
-      price: 2.50,
-      category: 'Sælgæti',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-    Product(
-      id: 'C1',
-      name: 'Trítlar',
-      price: 1.95,
-      category: 'Sælgæti',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-    Product(
-      id: 'C2',
-      name: 'Coke Zero',
-      price: 2.25,
-      category: 'Gos',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-    Product(
-      id: 'D1',
-      name: 'Pepsi Max',
-      price: 2.25,
-      category: 'Gos',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-    Product(
-      id: 'D2',
-      name: 'Appelsín',
-      price: 2.25,
-      category: 'Gos',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-    Product(
-      id: 'E1',
-      name: 'Prins Póló',
-      price: 1.50,
-      category: 'Sælgæti',
-      color: const Color(0xFFDAFDA3), // Updated color
-    ),
-  ];
+  // Product database - will be loaded from a file
+  List<Product> _products = [];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<File> _getProductsFile() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/products.json');
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final file = await _getProductsFile();
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        final List<dynamic> productJson = jsonDecode(content);
+        setState(() {
+          _products = productJson.map((json) => Product.fromJson(json)).toList();
+        });
+      } else {
+        // If the file doesn't exist, create it with default products
+        _createDefaultProducts();
+      }
+    } catch (e) {
+      print("Error loading products: $e");
+      // If there's an error, fall back to default products
+      _createDefaultProducts();
+    }
+  }
+
+  void _createDefaultProducts() {
+    setState(() {
+      _products = [
+        Product(id: 'A1', name: 'Viking Gull', price: 4.50, category: 'Áfengi'),
+        Product(id: 'A2', name: 'Rauðvín', price: 8.95, category: 'Áfengi'),
+        Product(id: 'B1', name: 'Hvítvín', price: 7.95, category: 'Áfengi'),
+        Product(id: 'B2', name: 'Nóa Kropp', price: 2.50, category: 'Sælgæti'),
+        Product(id: 'C1', name: 'Trítlar', price: 1.95, category: 'Sælgæti'),
+        Product(id: 'C2', name: 'Coke Zero', price: 2.25, category: 'Gos'),
+        Product(id: 'D1', name: 'Pepsi Max', price: 2.25, category: 'Gos'),
+        Product(id: 'D2', name: 'Appelsín', price: 2.25, category: 'Gos'),
+        Product(id: 'E1', name: 'Prins Póló', price: 1.50, category: 'Sælgæti'),
+      ];
+    });
+    _saveProducts();
+  }
+
+  Future<void> _saveProducts() async {
+    try {
+      final file = await _getProductsFile();
+      final List<Map<String, dynamic>> productJson = _products.map((p) => p.toJson()).toList();
+      await file.writeAsString(jsonEncode(productJson));
+    } catch (e) {
+      print("Error saving products: $e");
+    }
+  }
+  
   // Get filtered products based on selected category
   List<Product> get _filteredProducts {
     if (_selectedCategory == 'Allt') {
@@ -293,10 +289,21 @@ class _SjoppanPageState extends State<SjoppanPage> {
       // Calculate total amount
       final totalAmount = _totalPrice;
       
-      // Adyen Terminal API credentials
-      final String _apiKey = "AQEqhmfxL43JaxFCw0m/n3Q5qf3Ve59fDIZHTXfy5UT9AM9RlDqYku8lh1U2EMFdWw2+5HzctViMSCJMYAc=-iql6F+AYb1jkHn3zzDBcXZZvYzXFr9wd1iCR9y2JDU0=-i1i{=<;wFH*jLc94NQe";
-      final String _url = "https://terminal-api-test.adyen.com/sync";
-      final String _poiId = "S1F2-000158242574825";
+      final prefs = await SharedPreferences.getInstance();
+      final poiId = prefs.getString('selected_terminal');
+
+      if (poiId == null || poiId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please set the Terminal ID on the Connect page.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isProcessingPayment = false;
+        });
+        return;
+      }
       
       // Generate unique IDs for the transaction
       final now = DateTime.now();
@@ -315,7 +322,7 @@ class _SjoppanPageState extends State<SjoppanPage> {
             "MessageType": "Request",
             "ServiceID": serviceId,
             "SaleID": saleId,
-            "POIID": _poiId
+            "POIID": poiId
           },
           "PaymentRequest": {
             "SaleData": {
@@ -344,11 +351,14 @@ class _SjoppanPageState extends State<SjoppanPage> {
       };
       
       // Make the API request
-      final response = await http.post(
-        Uri.parse(_url),
+      final ioClient = HttpClient()
+        ..badCertificateCallback = (cert, host, port) => true;
+      final client = IOClient(ioClient);
+      
+      final response = await client.post(
+        Uri.parse("https://localhost:8443/nexo"),
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': _apiKey,
         },
         body: jsonEncode(requestPayload),
       );
@@ -742,6 +752,7 @@ class _SjoppanPageState extends State<SjoppanPage> {
                 if (_cartItems.containsKey(product.id)) {
                   _cartItems.remove(product.id);
                 }
+                _saveProducts(); // Save changes to file
               });
               
               // Update the modal state to reflect changes
@@ -879,9 +890,9 @@ class _SjoppanPageState extends State<SjoppanPage> {
                       name: nameController.text,
                       price: double.tryParse(priceController.text) ?? product.price,
                       category: selectedCategory,
-                      color: product.color,
                     );
                   }
+                  _saveProducts(); // Save changes to file
                 });
                 Navigator.pop(context); // Close the dialog
                 // Optionally show a SnackBar for feedback
@@ -906,10 +917,10 @@ class _SjoppanPageState extends State<SjoppanPage> {
                   name: nameController.text,
                   price: price,
                   category: selectedCategory,
-                  color: const Color(0xFFE8F5C8),
                 );
                 setState(() {
                   _products.add(newProduct);
+                  _saveProducts(); // Save changes to file
                 });
                 setModalState(() {});
                 Navigator.pop(context);
@@ -1311,15 +1322,32 @@ class Product {
   final String name;
   final double price;  // Changed from int to double
   final String category;
-  final Color color;
 
   Product({
     required this.id,
     required this.name,
     required this.price,
     required this.category,
-    required this.color,
   });
+
+  // Convert a Product into a Map. The keys must correspond to the names of the
+  // JSON attributes.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'price': price,
+    'category': category,
+  };
+
+  // Create a Product from a Map
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'],
+      name: json['name'],
+      price: (json['price'] as num).toDouble(),
+      category: json['category'],
+    );
+  }
 }
 
 class CartItem {
