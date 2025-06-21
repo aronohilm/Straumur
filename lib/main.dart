@@ -21,6 +21,7 @@ import 'simgreidsla_page.dart';
 import 'reikningvel_page.dart';
 //import 'qr_skanni_page.dart';
 import 'sjoppan_page.dart';
+import 'sjoppan_reorderable_page.dart';
 import 'connect_page.dart';
 
 void main() => runApp(const PaymentApp());
@@ -363,6 +364,17 @@ try {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const SjoppanPage()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.grid_view_rounded),
+                    title: const Text('Sjoppan (New)'),
+                    onTap: () {
+                      Navigator.pop(context); // Close the drawer first
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SjoppanReorderablePage()),
                       );
                     },
                   ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import 'logs_page.dart';
+//import 'logs_page.dart';
 import 'login_page.dart';
 import 'terminal_connection_page.dart';  // Make sure this import is added
 
@@ -62,7 +62,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: ListTile(
+                /*child: ListTile(
                   leading: Icon(Icons.receipt_long, color: Colors.blue[800]),
                   title: const Text('Transaction Logs'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -71,7 +71,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       MaterialPageRoute(builder: (_) => const LogsPage()),
                     );
                   },
-                ),
+                ),*/
               ),
               // You can add more settings options here
             ],

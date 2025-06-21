@@ -1,3 +1,4 @@
+import 'package:adyen_terminal_app/analytics_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -5,6 +6,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/io_client.dart';
+import 'models/order.dart';
+import 'models/product.dart';
+import 'models/cart_item.dart';
 
 class SjoppanPage extends StatefulWidget {
   const SjoppanPage({super.key});
@@ -86,6 +90,28 @@ class _SjoppanPageState extends State<SjoppanPage> {
     } catch (e) {
       print("Error saving products: $e");
     }
+  }
+
+  Future<void> _saveOrder(Order order) async {
+    try {
+      final file = await _getOrdersFile();
+      List<Order> orders = [];
+      if (await file.exists() && await file.readAsString() != '') {
+        final content = await file.readAsString();
+        final List<dynamic> ordersJson = jsonDecode(content);
+        orders = ordersJson.map((json) => Order.fromJson(json)).toList();
+      }
+      orders.add(order);
+      final List<Map<String, dynamic>> ordersJson = orders.map((o) => o.toJson()).toList();
+      await file.writeAsString(jsonEncode(ordersJson));
+    } catch (e) {
+      print("Error saving order: $e");
+    }
+  }
+
+  Future<File> _getOrdersFile() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return File('${dir.path}/orders.json');
   }
   
   // Get filtered products based on selected category
@@ -411,6 +437,21 @@ class _SjoppanPageState extends State<SjoppanPage> {
         
         // Clear cart if payment was approved
         if (transactionStatus == 'Approved') {
+          // Create and save the order
+          final Map<String, int> orderItems = {};
+          _cartItems.forEach((key, value) {
+            orderItems[value.product.id] = value.quantity;
+          });
+          
+          final order = Order(
+            id: saleId,
+            items: orderItems,
+            totalAmount: totalAmount,
+            timestamp: now,
+            successful: true,
+          );
+          _saveOrder(order);
+
           _cartItems.clear();
         }
         
@@ -1025,6 +1066,15 @@ class _SjoppanPageState extends State<SjoppanPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
+            icon: const Icon(Icons.show_chart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AnalyticsScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               // Connect settings icon to product management
@@ -1315,47 +1365,4 @@ class _SjoppanPageState extends State<SjoppanPage> {
       ),
     );
   }
-}
-
-class Product {
-  final String id;
-  final String name;
-  final double price;  // Changed from int to double
-  final String category;
-
-  Product({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.category,
-  });
-
-  // Convert a Product into a Map. The keys must correspond to the names of the
-  // JSON attributes.
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'price': price,
-    'category': category,
-  };
-
-  // Create a Product from a Map
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['id'],
-      name: json['name'],
-      price: (json['price'] as num).toDouble(),
-      category: json['category'],
-    );
-  }
-}
-
-class CartItem {
-  final Product product;
-  int quantity;
-
-  CartItem({
-    required this.product,
-    required this.quantity,
-  });
 }
